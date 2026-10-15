@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Generador de códigos QR de Binagora. Ingresá una URL y descargá el QR en PNG." />
+  <meta name="theme-color" content="#F69F2B" />
+  <title>Generador QR | Binagora</title>
+  <link rel="icon" type="image/png" href="assets/binagora-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Signika+Negative:wght@500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --ink: #323232;
+      --muted: #686868;
+      --background: #f7f7f7;
+      --card: #ffffff;
+      --line: #e3e3e3;
+      --orange: #f69f2b;
+      --orange-hover: #eb941f;
+      --font-body: "Source Sans 3", system-ui, sans-serif;
+      --font-heading: "Signika Negative", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--background);
+      font-family: var(--font-body);
+      line-height: 1.5;
+    }
+
+    button, input, select { font-family: inherit; }
+    button, a, input, select { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+    .shell { width: min(1000px, calc(100% - 40px)); margin: 0 auto; }
+
+    header { background: var(--card); border-top: 3px solid var(--orange); border-bottom: 1px solid var(--line); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 0; }
+    .brand { display: inline-flex; flex-shrink: 0; border-radius: 4px; }
+    .brand img { display: block; width: 200px; height: auto; }
+    .site-link { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: .9rem; text-decoration: none; }
+    .site-link:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--orange); text-underline-offset: 4px; }
+    .site-link svg { width: 15px; height: 15px; }
+
+    main { padding: 40px 0 56px; }
+    .intro { margin-bottom: 28px; }
+    h1 { margin: 0; font: 600 clamp(2rem, 4vw, 2.5rem)/1.2 var(--font-heading); letter-spacing: -.025em; }
+    .intro p { margin: 10px 0 0; color: var(--muted); }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+    .panel { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+    .form-panel { display: flex; flex-direction: column; padding: 32px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; font-size: .95rem; }
+    .input-wrap { position: relative; }
+    .input-wrap svg { position: absolute; width: 19px; height: 19px; left: 15px; top: 18px; color: var(--muted); pointer-events: none; }
+    input[type="url"] { width: 100%; min-height: 54px; border: 1px solid #c9c9c9; border-radius: 8px; background: var(--card); padding: 0 88px 0 43px; color: var(--ink); font-size: 1rem; transition: border-color .15s ease; }
+    input[type="url"]:focus { border-color: var(--ink); }
+    input[type="url"][aria-invalid="true"] { border-color: #b43a2d; }
+    .clear-btn { position: absolute; right: 7px; top: 7px; min-height: 40px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: .85rem; font-weight: 600; padding: 0 10px; cursor: pointer; }
+    .clear-btn:hover { background: var(--background); color: var(--ink); }
+    .helper { display: grid; gap: 4px; min-height: 24px; margin-top: 8px; font-size: .82rem; color: var(--muted); }
+    .error { color: #b43a2d; font-weight: 600; }
+    .error:empty { display: none; }
+
+    .options { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin: 24px 0 28px; }
+    select { width: 100%; height: 48px; border: 1px solid #c9c9c9; border-radius: 8px; background: var(--card); color: var(--ink); font-size: .95rem; padding: 0 12px; }
+    .color-control { height: 48px; display: flex; align-items: center; gap: 10px; padding: 5px 10px 5px 6px; border: 1px solid #c9c9c9; border-radius: 8px; background: var(--card); font-size: .9rem; }
+    input[type="color"] { width: 36px; height: 36px; flex-shrink: 0; padding: 2px; border: 1px solid var(--line); border-radius: 5px; background: var(--card); cursor: pointer; }
+    #color-value { font-variant-numeric: tabular-nums; }
+
+    .generate { width: 100%; min-height: 52px; margin-top: auto; border: 0; border-radius: 8px; background: var(--orange); color: var(--ink); font-size: 1rem; font-weight: 700; cursor: pointer; transition: background .15s ease; }
+    .generate:hover { background: var(--orange-hover); }
+
+    .qr-panel { padding: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .qr-title { margin: 0 0 20px; font: 500 1.15rem var(--font-heading); }
+    .qr-frame { width: min(274px, 100%); background: white; border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    #qrcode { display: grid; place-items: center; aspect-ratio: 1; }
+    #qrcode img, #qrcode canvas { display: block; max-width: 100%; height: auto !important; }
+    .qr-destination { width: 100%; margin-top: 16px; color: var(--muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .download { margin-top: 20px; min-height: 46px; border: 1px solid #c9c9c9; border-radius: 8px; background: var(--card); color: var(--ink); font-size: .95rem; font-weight: 600; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+    .download:hover { border-color: var(--orange); background: #fff8ee; }
+    .download svg { width: 17px; height: 17px; }
+
+    @media (max-width: 720px) {
+      main { padding-top: 28px; }
+      .workspace { grid-template-columns: 1fr; }
+      .form-panel { padding: 24px; }
+    }
+
+    @media (max-width: 460px) {
+      .shell { width: calc(100% - 24px); }
+      .header-inner { gap: 12px; padding: 10px 0; }
+      .brand img { width: 160px; }
+      .site-link { font-size: .8rem; }
+      .form-panel, .qr-panel { padding: 20px; }
+    }
+
+    @media (max-width: 400px) {
+      .options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell header-inner">
+      <a class="brand" href="https://binagora.com" target="_blank" rel="noopener noreferrer" aria-label="Binagora — ir al sitio">
+        <img src="assets/binagora-logo.png" alt="Binagora" width="316" height="126" />
+      </a>
+      <a class="site-link" href="https://binagora.com" target="_blank" rel="noopener noreferrer">
+        binagora.com
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17 17 7M7 7h10v10"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <h1>Generador de QR</h1>
+      <p>Pegá una URL y descargá el código.</p>
+    </section>
+
+    <section class="workspace" aria-label="Generador de código QR">
+      <form class="panel form-panel" id="qr-form" novalidate>
+        <label for="url">URL de destino</label>
+        <div class="input-wrap">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>
+          <input type="url" id="url" name="url" value="https://binagora.com" placeholder="https://tu-sitio.com/pagina" inputmode="url" autocomplete="url" aria-describedby="url-help url-error" />
+          <button class="clear-btn" type="button" id="clear">Limpiar</button>
+        </div>
+        <div class="helper">
+          <span id="url-help">Incluí https:// o http://.</span>
+          <span class="error" id="url-error" role="alert"></span>
+        </div>
+
+        <div class="options">
+          <div>
+            <label for="size">Tamaño de descarga</label>
+            <select id="size" name="size">
+              <option value="512">512 × 512 px</option>
+              <option value="1024" selected>1024 × 1024 px</option>
+              <option value="2048">2048 × 2048 px</option>
+            </select>
+          </div>
+          <div>
+            <label for="color">Color del QR</label>
+            <div class="color-control"><input type="color" id="color" value="#323232" aria-label="Color del código QR" /><span id="color-value">#323232</span></div>
+          </div>
+        </div>
+
+        <button class="generate" type="submit">Generar QR</button>
+      </form>
+
+      <aside class="panel qr-panel" aria-live="polite">
+        <h2 class="qr-title">Vista previa</h2>
+        <div class="qr-frame"><div id="qrcode" aria-label="Vista previa del código QR"></div></div>
+        <div class="qr-destination" id="qr-destination">https://binagora.com</div>
+        <button class="download" type="button" id="download">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>
+          Descargar PNG
+        </button>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const form = document.querySelector('#qr-form');
+    const urlInput = document.querySelector('#url');
+    const error = document.querySelector('#url-error');
+    const destination = document.querySelector('#qr-destination');
+    const qrNode = document.querySelector('#qrcode');
+    const sizeSelect = document.querySelector('#size');
+    const colorInput = document.querySelector('#color');
+    const colorValue = document.querySelector('#color-value');
+
+    function isValidWebUrl(value) {
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch { return false; }
+    }
+
+    function drawQR(value) {
+      qrNode.innerHTML = '';
+      new QRCode(qrNode, {
+        text: value,
+        width: 240,
+        height: 240,
+        colorDark: colorInput.value,
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      destination.textContent = value;
+      destination.title = value;
+    }
+
+    function generate() {
+      const value = urlInput.value.trim();
+      if (!isValidWebUrl(value)) {
+        error.textContent = 'Revisá el enlace';
+        urlInput.setAttribute('aria-invalid', 'true');
+        urlInput.focus();
+        return false;
+      }
+      error.textContent = '';
+      urlInput.removeAttribute('aria-invalid');
+      drawQR(value);
+      return true;
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      generate();
+    });
+
+    urlInput.addEventListener('input', () => { error.textContent = ''; urlInput.removeAttribute('aria-invalid'); });
+    colorInput.addEventListener('input', () => { colorValue.textContent = colorInput.value.toUpperCase(); if (isValidWebUrl(urlInput.value.trim())) drawQR(urlInput.value.trim()); });
+    document.querySelector('#clear').addEventListener('click', () => { urlInput.value = ''; error.textContent = ''; urlInput.removeAttribute('aria-invalid'); urlInput.focus(); });
+
+    document.querySelector('#download').addEventListener('click', () => {
+      if (!generate()) return;
+      const value = urlInput.value.trim();
+      const px = Number(sizeSelect.value);
+      const scratch = document.createElement('div');
+      scratch.style.position = 'fixed';
+      scratch.style.left = '-9999px';
+      document.body.appendChild(scratch);
+      new QRCode(scratch, { text: value, width: px, height: px, colorDark: colorInput.value, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+      requestAnimationFrame(() => {
+        const canvas = scratch.querySelector('canvas');
+        const image = scratch.querySelector('img');
+        const href = canvas && canvas.width ? canvas.toDataURL('image/png') : image.src;
+        const link = document.createElement('a');
+        link.href = href;
+        link.download = 'qr-binagora.png';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        scratch.remove();
+      });
+    });
+
+    if (window.QRCode) drawQR(urlInput.value);
+    else error.textContent = 'No se pudo cargar el generador. Recargá la página.';
+  </script>
+</body>
+</html>
